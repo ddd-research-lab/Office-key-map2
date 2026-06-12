@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>オフィス鍵対応マップ</title>
+<style id="pageStyle"></style>
+<style>
+  :root{
+    --ink:#22304A; --ink-2:#5B6B85; --line:#D9DDE4;
+    --paper:#FFFFFF; --bg:#EEECE6; --panel:#FAFAF8;
+    --accent:#2E86AB; --danger:#C24A4A;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",Meiryo,sans-serif;
+    color:var(--ink); background:var(--bg);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+
+  /* ---------- ヘッダー ---------- */
+  header{
+    height:50px; flex:0 0 auto; background:var(--ink); color:#fff;
+    display:flex; align-items:center; gap:16px; padding:0 14px;
+  }
+  .brand{display:flex; align-items:center; gap:9px; font-weight:700; font-size:15px; letter-spacing:.04em; white-space:nowrap;}
+  .brand svg{flex:0 0 auto;}
+  .brand .sub{font-size:11px; font-weight:400; color:#ABB6CC; letter-spacing:.12em; margin-left:2px;}
+  .spacer{flex:1;}
+  .hbtn{
+    background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.22);
+    border-radius:6px; padding:6px 12px; font-size:12.5px; cursor:pointer; white-space:nowrap;
+    font-family:inherit;
+  }
+  .hbtn:hover{background:rgba(255,255,255,.18);}
+  .hbtn.icon{width:30px; height:30px; padding:0; border-radius:50%; font-weight:700; font-size:14px;}
+  .hgroup{display:flex; gap:6px; align-items:center;}
+  .hsep{width:1px; height:22px; background:rgba(255,255,255,.2);}
+
+  /* ---------- レイアウト ---------- */
+  main{flex:1; display:flex; min-height:0;}
+  aside{
+    background:var(--panel); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; min-height:0;
+  }
+  #keyPanel{width:248px; flex:0 0 auto;}
+  #propPanel{width:264px; flex:0 0 auto; border-right:none; border-left:1px solid var(--line);}
+  .ptitle{
+    flex:0 0 auto; padding:10px 14px 8px; font-size:11px; font-weight:700; letter-spacing:.14em;
+    color:var(--ink-2); border-bottom:1px solid var(--line);
+  }
+  .pbody{flex:1; overflow-y:auto; padding:10px 12px 16px;}
+
+  /* ---------- 鍵リスト ---------- */
+  .krow{
+    display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:8px;
+    cursor:pointer; border:1px solid transparent;
+  }
+  .krow:hover{background:#EFF3F7; border-color:#DCE5EE;}
+  .krow .dot{
+    flex:0 0 auto; width:26px; height:17px; border-radius:8px; position:relative;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.15);
+  }
+  .krow .dot::before{
+    content:""; position:absolute; left:4px; top:50%; transform:translateY(-50%);
+    width:7px; height:7px; border-radius:50%; border:1.6px solid rgba(255,255,255,.9);
+  }
+  .krow .kt{min-width:0;}
+  .krow .kno{font-weight:700; font-size:13px;}
+  .krow .knm{font-size:11px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ksec{margin:12px 2px 6px; font-size:11px; color:var(--ink-2); font-weight:700;}
+  .kempty{font-size:12px; color:var(--ink-2); padding:10px 6px; line-height:1.7;}
+  .krow.nokey .dot{background:#E3E3DE !important;}
+  .krow.nokey .dot::before{border-color:#fff;}
+  .kcount{margin-left:auto; font-size:10.5px; color:var(--ink-2);}
+
+  /* ---------- キャンバス ---------- */
+  #canvasWrap{flex:1; position:relative; min-width:0; background:var(--bg);}
+  svg#cv{position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none;}
+  .zoomctl{
+    position:absolute; right:14px; bottom:14px; display:flex; gap:4px;
+    background:#fff; border:1px solid var(--line); border-radius:8px; padding:4px;
+    box-shadow:0 2px 8px rgba(34,48,74,.12); align-items:center;
+  }
+  .zoomctl button{
+    width:30px; height:28px; border:none; background:none; cursor:pointer; font-size:15px;
+    color:var(--ink); border-radius:5px; font-family:inherit;
+  }
+  .zoomctl button:hover{background:#EFF3F7;}
+  .zoomctl .zval{font-size:11px; width:42px; text-align:center; color:var(--ink-2);}
+  .toolbar{
+    position:absolute; left:14px; top:14px; display:flex; flex-direction:column; gap:6px;
+    background:#fff; border:1px solid var(--line); border-radius:10px; padding:7px;
+    box-shadow:0 2px 8px rgba(34,48,74,.12);
+  }
+  .toolbar .tlabel{font-size:10px; color:var(--ink-2); text-align:center; letter-spacing:.1em; margin-bottom:1px;}
+  .tbtn{
+    display:flex; align-items:center; gap:8px; border:1px solid var(--line); background:#FCFCFA;
+    border-radius:7px; padding:7px 10px; cursor:pointer; font-size:12.5px; font-family:inherit; color:var(--ink);
+  }
+  .tbtn:hover{background:#EFF3F7; border-color:#C7D3DE;}
+  .tbtn svg{flex:0 0 auto;}
+
+  /* ---------- プロパティ ---------- */
+  .field{margin-bottom:11px;}
+  .field label{display:block; font-size:11px; color:var(--ink-2); margin-bottom:4px; font-weight:600;}
+  .field input[type=text], .field input[type=number]{
+    width:100%; border:1px solid var(--line); border-radius:6px; padding:7px 8px; font-size:13px;
+    font-family:inherit; background:#fff; color:var(--ink);
+  }
+  .field input:focus{outline:2px solid #BFD9E8; border-color:var(--accent);}
+  .frow{display:flex; gap:8px;}
+  .frow .field{flex:1; min-width:0;}
+  .swatches{display:grid; grid-template-columns:repeat(6,1fr); gap:6px;}
+  .sw{aspect-ratio:1; border-radius:6px; cursor:pointer; border:2px solid transparent;}
+  .sw.on{border-color:var(--ink); box-shadow:0 0 0 2px #fff inset;}
+  .seg{display:flex; border:1px solid var(--line); border-radius:7px; overflow:hidden; background:#fff;}
+  .seg button{
+    flex:1; border:none; background:none; padding:7px 0; font-size:13px; cursor:pointer;
+    font-family:inherit; color:var(--ink); border-left:1px solid var(--line);
+  }
+  .seg button:first-child{border-left:none;}
+  .seg button:hover{background:#EFF3F7;}
+  .seg button.on{background:var(--ink); color:#fff;}
+  .pbtns{display:flex; gap:8px; margin-top:14px;}
+  .pbtn{
+    flex:1; border:1px solid var(--line); background:#fff; border-radius:7px; padding:8px 4px;
+    font-size:12px; cursor:pointer; font-family:inherit; color:var(--ink);
+  }
+  .pbtn:hover{background:#EFF3F7;}
+  .pbtn.del{color:var(--danger); border-color:#E4C9C9;}
+  .pbtn.del:hover{background:#FBF0F0;}
+  .pbtn.main{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .pbtn.main:hover{background:#34466B;}
+  .nosel{font-size:12px; color:var(--ink-2); line-height:1.9; padding:6px 2px;}
+  .phint{font-size:11px; color:var(--ink-2); line-height:1.7; margin-top:10px;}
+  .roomset{border-top:1px solid var(--line); padding:12px; flex:0 0 auto;}
+  .roomset .rtitle{font-size:11px; font-weight:700; color:var(--ink-2); letter-spacing:.1em; margin-bottom:8px;}
+  .chk{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink); margin-top:11px; cursor:pointer; user-select:none;}
+  .chk input{accent-color:var(--accent); width:15px; height:15px; cursor:pointer;}
+  .typechip{
+    display:inline-block; font-size:11px; background:#ECF1F6; border:1px solid #D6E0EA;
+    color:var(--ink-2); border-radius:20px; padding:2px 10px; margin-bottom:10px; margin-right:6px;
+  }
+  .typechip.grp{background:#F5EFDE; border-color:#E2D4AC; color:#7A6428;}
+
+  /* ---------- モーダル ---------- */
+  dialog{
+    border:none; border-radius:14px; padding:0; max-width:560px; width:92%;
+    box-shadow:0 18px 50px rgba(20,28,46,.35); color:var(--ink);
+  }
+  dialog::backdrop{background:rgba(24,32,50,.45);}
+  .mhead{display:flex; align-items:center; justify-content:space-between; padding:16px 20px 12px; border-bottom:1px solid var(--line);}
+  .mhead h2{font-size:16px;}
+  .mclose{border:none; background:none; font-size:20px; cursor:pointer; color:var(--ink-2); line-height:1;}
+  .mbody{padding:16px 22px 22px; font-size:13px; line-height:2.0; max-height:62vh; overflow-y:auto;}
+  .mbody h3{font-size:13px; margin:14px 0 4px; color:var(--accent);}
+  .mbody kbd{
+    background:#EEF1F5; border:1px solid #D4DAE2; border-bottom-width:2px; border-radius:4px;
+    padding:1px 6px; font-size:11px; font-family:inherit;
+  }
+
+  /* ---------- SVGエフェクト ---------- */
+  .pulse{animation:pulse 1.5s ease-out forwards; pointer-events:none;}
+  @keyframes pulse{
+    0%{opacity:1; stroke-width:3;}
+    60%{opacity:1;}
+    100%{opacity:0; stroke-width:10;}
+  }
+  @media (prefers-reduced-motion: reduce){ .pulse{animation-duration:.01s;} }
+
+  @media (max-width: 900px){
+    #keyPanel{width:190px;}
+    #propPanel{width:220px;}
+    .brand .sub{display:none;}
+  }
+
+  /* ---------- A4印刷 ---------- */
+  #printSheet{display:none;}
+  @media print{
+    body{display:block; overflow:visible; background:#fff; height:auto;}
+    header, main, .zoomctl, .toolbar, dialog{display:none !important;}
+    #printSheet{display:block; color:#1A2236;}
+    .phead{display:flex; justify-content:space-between; align-items:baseline;
+      border-bottom:2px solid #22304A; padding-bottom:2mm; margin-bottom:3mm;}
+    .pttl{font-size:14pt; font-weight:700;}
+    .pdate{font-size:9pt; color:#666;}
+    .pmap{width:100%; text-align:center;}
+    .pmap svg{width:100%; height:100%;}
+    .plist{margin-top:3mm; column-gap:6mm;}
+    .plist.c3{column-count:3;}
+    .plist.c2{column-count:2;}
+    .prow{break-inside:avoid; display:flex; align-items:center; gap:2.5mm;
+      font-size:9.5pt; padding:1mm 0; border-bottom:.3mm solid #CCC;}
+    .pdot{flex:0 0 auto; width:8mm; height:4mm; border-radius:2mm; border:.3mm solid rgba(0,0,0,.25);}
+    .pkno{font-weight:700; white-space:nowrap; min-width:12mm;}
+    .pnames{color:#333; overflow:hidden;}
+    .pnote{font-size:8.5pt; color:#555; margin-top:2.5mm;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <circle cx="8" cy="8" r="4.6" stroke="#F2C14E" stroke-width="2.4"/>
+      <path d="M11.4 11.4 L20 20 M16.5 16.5 L19 14 M18.2 18.2 L21 15.4" stroke="#F2C14E" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>
+    鍵対応マップ
+    <span class="sub">OFFICE KEY MAP</span>
+  </div>
+  <div class="spacer"></div>
+  <div class="hgroup">
+    <button class="hbtn" id="btnA4">A4印刷</button>
+    <button class="hbtn" id="btnPng">PNG書き出し</button>
+    <div class="hsep"></div>
+    <button class="hbtn" id="btnSave">保存（JSON）</button>
+    <button class="hbtn" id="btnLoad">読み込み</button>
+    <div class="hsep"></div>
+    <button class="hbtn icon" id="btnHelp" title="使い方">?</button>
+  </div>
+</header>
+
+<main>
+  <!-- 左：鍵リスト -->
+  <aside id="keyPanel">
+    <div class="ptitle">鍵リスト</div>
+    <div class="pbody" id="keyList"></div>
+    <div class="roomset">
+      <div class="rtitle">部屋サイズ（cm）</div>
+      <div class="frow">
+        <div class="field" style="margin-bottom:0;">
+          <label for="roomW">幅</label>
+          <input type="number" id="roomW" min="200" max="10000" step="50">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="roomH">奥行</label>
+          <input type="number" id="roomH" min="200" max="10000" step="50">
+        </div>
+      </div>
+      <label class="chk"><input type="checkbox" id="gridChk" checked> グリッド線を表示</label>
+      <label class="chk"><input type="checkbox" id="nameChk" checked> 名前を表示</label>
+    </div>
+  </aside>
+
+  <!-- 中央：キャンバス -->
+  <div id="canvasWrap">
+    <svg id="cv" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="gridS" width="50" height="50" patternUnits="userSpaceOnUse">
+          <path d="M50 0 H0 V50" fill="none" stroke="#E2E8EF" stroke-width="1"/>
+        </pattern>
+        <pattern id="gridL" width="100" height="100" patternUnits="userSpaceOnUse">
+          <path d="M100 0 H0 V100" fill="none" stroke="#CFD9E4" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <g id="world">
+        <g id="roomG"></g>
+        <g id="items"></g>
+        <g id="fx"></g>
+        <g id="overlay"></g>
+        <g id="roomHG"></g>
+      </g>
+    </svg>
+
+    <div class="toolbar">
+      <div class="tlabel">追加</div>
+      <button class="tbtn" data-add="desk">
+        <svg width="17" height="17" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="11" rx="2" fill="#E7EDF5" stroke="#5B7396" stroke-width="1.6"/><line x1="3" y1="13.5" x2="21" y2="13.5" stroke="#5B7396" stroke-width="1.2"/></svg>
+        デスク
+      </button>
+      <button class="tbtn" data-add="subdesk">
+        <svg width="17" height="17" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="1.5" fill="#DFE7F0" stroke="#5B7396" stroke-width="1.6"/><line x1="7" y1="9" x2="17" y2="9" stroke="#5B7396" stroke-width="1.2"/><line x1="7" y1="15" x2="17" y2="15" stroke="#5B7396" stroke-width="1.2"/><line x1="10.5" y1="6" x2="13.5" y2="6" stroke="#5B7396" stroke-width="1.4"/></svg>
+        サブデスク
+      </button>
+      <button class="tbtn" data-add="cabinet">
+        <svg width="17" height="17" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1.5" fill="#F2ECDF" stroke="#9A8A6A" stroke-width="1.6"/><line x1="12" y1="4" x2="12" y2="20" stroke="#9A8A6A" stroke-width="1.4"/><circle cx="10" cy="12" r="1" fill="#9A8A6A"/><circle cx="14" cy="12" r="1" fill="#9A8A6A"/></svg>
+        収納棚
+      </button>
+      <button class="tbtn" data-add="wall">
+        <svg width="17" height="17" viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="4" rx="1" fill="#3A4254"/></svg>
+        壁・間仕切り
+      </button>
+      <button class="tbtn" data-add="label">
+        <svg width="17" height="17" viewBox="0 0 24 24"><text x="12" y="17" font-size="15" font-weight="700" text-anchor="middle" fill="#5B6B85">あ</text></svg>
+        ラベル
+      </button>
+    </div>
+
+    <div class="zoomctl">
+      <button id="zoomOut" title="縮小">−</button>
+      <span class="zval" id="zoomVal">100%</span>
+      <button id="zoomIn" title="拡大">＋</button>
+      <button id="zoomFit" title="全体表示" style="font-size:12px;">⛶</button>
+    </div>
+  </div>
+
+  <!-- 右：プロパティ -->
+  <aside id="propPanel">
+    <div class="ptitle">プロパティ</div>
+    <div class="pbody" id="props"></div>
+  </aside>
+</main>
+
+<div id="printSheet"></div>
+
+<dialog id="helpDlg">
+  <div class="mhead"><h2>使い方</h2><button class="mclose" id="helpClose">×</button></div>
+  <div class="mbody">
+    <h3>配置する</h3>
+    左上の「追加」からデスク・サブデスク・収納棚などを配置できます。ドラッグで移動、選択中はハンドルでサイズ変更できます。移動・サイズ変更は10cm単位にスナップします（<kbd>Shift</kbd>を押しながらで1cm単位の微調整）。サブデスクは右パネルで引き出しの段数を1〜4段に、収納棚は扉タイプ（観音開き／横スライド）を切り替えられ、図の表現も変わります。
+    <h3>部屋の大きさ・表示切替</h3>
+    部屋の右端・下端・右下角の白いハンドルをドラッグすると部屋の大きさを直接変更できます。左下の数値入力（cm）でも指定できます。グリッド線と家具の名前は左下のチェックで表示・非表示を切り替えられ、印刷・PNGにも反映されます（名前を隠してもキータグは表示されたままです）。
+    <h3>鍵を対応付ける</h3>
+    家具を選択して右パネルの「鍵番号」に実際の鍵のタグ名（例：A-1）を入力すると、家具にキータグが表示されます。色は鍵ごとに変えると見分けやすくなります。鍵番号を設定すると枠線も同じ色になります。タグの大きさ（小・中・大）と位置（四隅）は右パネルで変更でき、タグ自体をドラッグして好きな場所に置くこともできます（<kbd>Shift</kbd>+ドラッグで1cm単位）。「タグ位置をリセット」で四隅プリセットに戻ります。
+    <h3>収納棚の合体・分解</h3>
+    <kbd>Shift</kbd>+クリックで収納棚を複数選択し、右パネルの「合体」を押すと一列に整列してグループになります。グループはクリックでまとめて選択・移動でき、個別に編集したいときはダブルクリックします。「分解」でグループを解除できます。
+    <h3>鍵リスト</h3>
+    左パネルに鍵と家具の対応一覧が表示されます。行をクリックすると、対応する家具がマップ上で点滅して場所がすぐ分かります。同じ鍵番号を複数の家具に付ければマスターキーの表現もできます。
+    <h3>A4印刷・書き出し</h3>
+    「A4印刷」を押すと、マップと鍵対応表をA4用紙1枚にまとめた印刷用レイアウトが開きます（部屋の縦横に合わせて自動で横向き・縦向きを選択）。そのまま印刷してコピー・掲示に使えます。「PNG書き出し」では画像として保存できます。
+    <h3>キーボード操作</h3>
+    <kbd>Delete</kbd> 削除　<kbd>↑↓←→</kbd> 10cm移動（<kbd>Shift</kbd>+で1cm）　<kbd>Ctrl</kbd>+<kbd>D</kbd> 複製　<kbd>Esc</kbd> 選択解除
+    <h3>保存について</h3>
+    編集内容はブラウザに自動保存されます（環境によっては保存されない場合があります）。確実に残すには「保存（JSON）」でファイルを書き出し、「読み込み」で復元してください。
+  </div>
+</dialog>
+
+<input type="file" id="fileIn" accept=".json,application/json" hidden>
+
+<script>
+"use strict";
+/* =========================================================
+   オフィス鍵対応マップ
+   単位：1px = 1cm
+========================================================= */
+const PALETTE = ['#D1495B','#2E86AB','#3B8C5A','#8C5DA8','#C97B16','#0F7E8C',
+                 '#5C6BC0','#A04668','#6B8E23','#B25B38','#3E7CB1','#7A6A8A'];
+const TYPE_NAME = {desk:'デスク', subdesk:'サブデスク', cabinet:'収納棚', wall:'壁・間仕切り', label:'ラベル'};
+const FURN = t => t==='desk' || t==='subdesk' || t==='cabinet';
+const LS_KEY = 'office-key-map-v1';
+
+let state = null;
+let selIds = [];
+let zoom = 1, panX = 0, panY = 0;
+let viewTouched = false;   // ユーザーが手動でズーム/パンしたか（自動フィット制御用）
+let colorIdx = 0;
+let propEditing = false;   // プロパティ入力中はパネル再構築しない
+
+const $ = s => document.querySelector(s);
+const cv = $('#cv'), worldG = $('#world'), itemsG = $('#items'),
+      roomG = $('#roomG'), overlayG = $('#overlay'), fxG = $('#fx'),
+      roomHG = $('#roomHG');
+
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                 .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+const selectedItems = () => state.items.filter(i => selIds.includes(i.id));
+
+/* ---------- 初期データ ---------- */
+function defaultState(){
+  const items = [
+    {id:1, type:'desk',    x:60,  y:60,  w:140, h:70,  name:'デスク 1', keyNo:'A-1', color:PALETTE[0]},
+    {id:2, type:'desk',    x:60,  y:150, w:140, h:70,  name:'デスク 2', keyNo:'A-2', color:PALETTE[1]},
+    {id:3, type:'cabinet', x:420, y:60,  w:90,  h:45,  name:'書類棚',   keyNo:'B-1', color:PALETTE[2], door:'hinged'},
+    {id:4, type:'cabinet', x:420, y:130, w:90,  h:45,  name:'金庫前棚', keyNo:'',    color:PALETTE[3], door:'sliding'},
+    {id:5, type:'subdesk', x:210, y:60,  w:45,  h:70,  name:'サブデスク 1', keyNo:'C-1', color:PALETTE[4], drawers:3},
+  ];
+  colorIdx = 5;
+  return {room:{w:600, h:400}, items, seq:6, showGrid:true, showNames:true, groupSeq:0};
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      if(d && d.room && Array.isArray(d.items)){
+        colorIdx = d.items.length % PALETTE.length;
+        if(d.showGrid === undefined) d.showGrid = true;
+        if(d.showNames === undefined) d.showNames = true;
+        if(!d.groupSeq) d.groupSeq = 0;
+        return d;
+      }
+    }
+  }catch(e){ /* localStorage不可環境 */ }
+  return defaultState();
+}
+let saveTimer = null;
+function persist(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  }, 250);
+}
+
+/* ---------- 座標変換 ---------- */
+function screenToWorld(cx, cy){
+  const r = cv.getBoundingClientRect();
+  return {x:(cx - r.left - panX)/zoom, y:(cy - r.top - panY)/zoom};
+}
+function applyView(){
+  worldG.setAttribute('transform', `translate(${panX},${panY}) scale(${zoom})`);
+  $('#zoomVal').textContent = Math.round(zoom*100)+'%';
+  renderRoomHandles();
+}
+function zoomFit(){
+  const r = cv.getBoundingClientRect();
+  if(r.width < 80 || r.height < 80) return false;   // レイアウト未確定時は何もしない
+  const m = 40;
+  zoom = Math.min((r.width-m*2)/state.room.w, (r.height-m*2)/state.room.h);
+  zoom = Math.max(0.05, Math.min(zoom, 3));
+  panX = (r.width  - state.room.w*zoom)/2;
+  panY = (r.height - state.room.h*zoom)/2;
+  applyView();
+  return true;
+}
+function zoomAt(factor, cx, cy){
+  viewTouched = true;
+  const r = cv.getBoundingClientRect();
+  if(cx == null){ cx = r.left + r.width/2; cy = r.top + r.height/2; }
+  const before = screenToWorld(cx, cy);
+  zoom = Math.max(0.05, Math.min(4, zoom*factor));
+  panX = cx - r.left - before.x*zoom;
+  panY = cy - r.top  - before.y*zoom;
+  applyView();
+}
+
+/* ---------- 描画 ---------- */
+function renderRoom(){
+  const {w,h} = state.room;
+  let html = `<rect x="0" y="0" width="${w}" height="${h}" fill="#FFFFFF"/>`;
+  if(state.showGrid){
+    html += `<rect x="0" y="0" width="${w}" height="${h}" fill="url(#gridS)"/>` +
+            `<rect x="0" y="0" width="${w}" height="${h}" fill="url(#gridL)"/>`;
+  }
+  html += `<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#8FA3B8" stroke-width="3"/>`;
+  roomG.innerHTML = html;
+  renderRoomHandles();
+}
+
+function renderRoomHandles(){
+  if(!state) return;
+  const {w,h} = state.room;
+  const s = 13/zoom, sw = 1.6/zoom, r = 3/zoom;
+  const hs = [['e', w, h/2], ['s', w/2, h], ['se', w, h]];
+  const cur = {e:'ew-resize', s:'ns-resize', se:'nwse-resize'};
+  roomHG.innerHTML = hs.map(([k,x,y]) =>
+    `<rect data-room="${k}" x="${x-s/2}" y="${y-s/2}" width="${s}" height="${s}" rx="${r}"
+      fill="#fff" stroke="#8FA3B8" stroke-width="${sw}" style="cursor:${cur[k]};"/>`
+  ).join('') +
+  `<text x="${w-6/zoom}" y="${h+22/zoom}" text-anchor="end" font-size="${11/zoom}" fill="#8FA3B8">${w}×${h} cm</text>`;
+}
+
+function tagAnchor(it){
+  const sc = it.tagScale || 1;
+  const tw = (22 + String(it.keyNo).length*8.2) * sc;
+  const th = 20 * sc;
+  if(it.tagOx != null && it.tagOy != null) return {ox:it.tagOx, oy:it.tagOy, tw, th, sc};
+  const pos = it.tagPos || 'tl';
+  const ox = pos.includes('l') ? -4 : it.w + 4 - tw;
+  const oy = pos.includes('t') ? -th - 4 : it.h + 4;
+  return {ox, oy, tw, th, sc};
+}
+
+function keyTagSVG(it){
+  if(!it.keyNo) return '';
+  const t = esc(it.keyNo);
+  const {ox, oy, tw, th, sc} = tagAnchor(it);
+  const tx = it.x + ox, ty = it.y + oy;
+  return `<g class="keytag" data-tag="${it.id}" style="cursor:grab;">
+    <rect x="${tx}" y="${ty}" width="${tw}" height="${th}" rx="${9.5*sc}" fill="${esc(it.color)}" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+    <circle cx="${tx+10*sc}" cy="${ty+10*sc}" r="${4*sc}" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="${1.6*sc}"/>
+    <text x="${tx+18*sc}" y="${ty+14.5*sc}" font-size="${12*sc}" font-weight="700" fill="#fff">${t}</text>
+  </g>`;
+}
+
+function itemSVG(it){
+  const name = esc(it.name);
+  const showName = state.showNames !== false;
+  let body = '';
+  if(it.type === 'desk'){
+    const stroke = it.keyNo ? it.color : '#5B7396';
+    body =
+      `<rect x="${it.x}" y="${it.y}" width="${it.w}" height="${it.h}" rx="4" fill="#E7EDF5" stroke="${esc(stroke)}" stroke-width="2"/>` +
+      `<rect x="${it.x+4}" y="${it.y+it.h-11}" width="${it.w-8}" height="7" rx="2" fill="#CDD9E8"/>` +
+      (showName ? `<text x="${it.x+it.w/2}" y="${it.y+it.h/2+4}" text-anchor="middle" font-size="13" fill="#2C3B57">${name}</text>` : '');
+  }else if(it.type === 'subdesk'){
+    const stroke = it.keyNo ? it.color : '#5B7396';
+    const n = Math.max(1, Math.min(4, it.drawers || 3));
+    const hw = Math.min(14, it.w*0.4);
+    let inner = '';
+    for(let i=1; i<n; i++){
+      const yy = it.y + it.h*i/n;
+      inner += `<line x1="${it.x+3}" y1="${yy}" x2="${it.x+it.w-3}" y2="${yy}" stroke="#9FB2C9" stroke-width="1.4"/>`;
+    }
+    for(let i=0; i<n; i++){
+      const yy = it.y + it.h*(i+0.5)/n;
+      inner += `<line x1="${it.x+it.w/2-hw/2}" y1="${yy}" x2="${it.x+it.w/2+hw/2}" y2="${yy}" stroke="#7C92AD" stroke-width="2" stroke-linecap="round"/>`;
+    }
+    body =
+      `<rect x="${it.x}" y="${it.y}" width="${it.w}" height="${it.h}" rx="3" fill="#DFE7F0" stroke="${esc(stroke)}" stroke-width="2"/>` +
+      inner +
+      (showName ? `<text x="${it.x+it.w/2}" y="${it.y+it.h+15}" text-anchor="middle" font-size="12" fill="#4E6079">${name}</text>` : '');
+  }else if(it.type === 'cabinet'){
+    const stroke = it.keyNo ? it.color : '#9A8A6A';
+    const horiz = it.w >= it.h;                 // 正面＝長い辺（横長なら下辺、縦長なら右辺）
+    const cx = it.x + it.w/2, cy = it.y + it.h/2;
+    let inner = '';
+    if(it.door === 'sliding'){
+      if(horiz){
+        const ov = Math.max(6, Math.min(14, it.w*0.12));   // 引き違いの重なり幅
+        const f1 = it.y + it.h - 7, f2 = it.y + it.h - 12; // 前後のレール
+        inner =
+          `<line x1="${it.x+3}" y1="${f1}" x2="${cx+ov}" y2="${f1}" stroke="#B3A584" stroke-width="3" stroke-linecap="round"/>` +
+          `<line x1="${cx-ov}" y1="${f2}" x2="${it.x+it.w-3}" y2="${f2}" stroke="#B3A584" stroke-width="3" stroke-linecap="round"/>` +
+          `<line x1="${cx+ov-1}" y1="${f1-3}" x2="${cx+ov-1}" y2="${f1+3}" stroke="#8A7B5C" stroke-width="1.6"/>` +
+          `<line x1="${cx-ov+1}" y1="${f2-3}" x2="${cx-ov+1}" y2="${f2+3}" stroke="#8A7B5C" stroke-width="1.6"/>`;
+      }else{
+        const ov = Math.max(6, Math.min(14, it.h*0.12));
+        const f1 = it.x + it.w - 7, f2 = it.x + it.w - 12;
+        inner =
+          `<line x1="${f1}" y1="${it.y+3}" x2="${f1}" y2="${cy+ov}" stroke="#B3A584" stroke-width="3" stroke-linecap="round"/>` +
+          `<line x1="${f2}" y1="${cy-ov}" x2="${f2}" y2="${it.y+it.h-3}" stroke="#B3A584" stroke-width="3" stroke-linecap="round"/>` +
+          `<line x1="${f1-3}" y1="${cy+ov-1}" x2="${f1+3}" y2="${cy+ov-1}" stroke="#8A7B5C" stroke-width="1.6"/>` +
+          `<line x1="${f2-3}" y1="${cy-ov+1}" x2="${f2+3}" y2="${cy-ov+1}" stroke="#8A7B5C" stroke-width="1.6"/>`;
+      }
+    }else{ /* 観音開き */
+      if(horiz){
+        inner =
+          `<line x1="${cx}" y1="${it.y+3}" x2="${cx}" y2="${it.y+it.h-3}" stroke="#B3A584" stroke-width="1.5"/>` +
+          `<circle cx="${cx-7}" cy="${cy}" r="2" fill="#9A8A6A"/>` +
+          `<circle cx="${cx+7}" cy="${cy}" r="2" fill="#9A8A6A"/>`;
+      }else{
+        inner =
+          `<line x1="${it.x+3}" y1="${cy}" x2="${it.x+it.w-3}" y2="${cy}" stroke="#B3A584" stroke-width="1.5"/>` +
+          `<circle cx="${cx}" cy="${cy-7}" r="2" fill="#9A8A6A"/>` +
+          `<circle cx="${cx}" cy="${cy+7}" r="2" fill="#9A8A6A"/>`;
+      }
+    }
+    body =
+      `<rect x="${it.x}" y="${it.y}" width="${it.w}" height="${it.h}" rx="2" fill="#F2ECDF" stroke="${esc(stroke)}" stroke-width="2"/>` +
+      inner +
+      (showName ? `<text x="${cx}" y="${it.y+it.h+15}" text-anchor="middle" font-size="12" fill="#6E6248">${name}</text>` : '');
+  }else if(it.type === 'wall'){
+    body =
+      `<rect x="${it.x}" y="${it.y}" width="${it.w}" height="${it.h}" fill="#3A4254"/>` +
+      (it.name && showName ? `<text x="${it.x+it.w/2}" y="${it.y-5}" text-anchor="middle" font-size="11" fill="#5B6B85">${name}</text>` : '');
+  }else if(it.type === 'label'){
+    const fs = it.fontSize || 18;
+    body = `<text x="${it.x}" y="${it.y+fs}" font-size="${fs}" font-weight="700" fill="#44506B">${name || 'ラベル'}</text>`;
+  }
+  return `<g data-id="${it.id}" style="cursor:move;">${body}${keyTagSVG(it)}</g>`;
+}
+
+function groupOutlines(){
+  const gids = [...new Set(state.items.filter(i=>i.groupId).map(i=>i.groupId))];
+  let html = '';
+  for(const g of gids){
+    const ms = state.items.filter(i=>i.groupId===g);
+    if(ms.length < 2) continue;
+    const x1 = Math.min(...ms.map(i=>i.x))-3, y1 = Math.min(...ms.map(i=>i.y))-3;
+    const x2 = Math.max(...ms.map(i=>i.x+i.w))+3, y2 = Math.max(...ms.map(i=>i.y+i.h))+3;
+    html += `<rect x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" rx="4" fill="none"
+      stroke="#B49B5F" stroke-width="1.5" stroke-dasharray="7,4" pointer-events="none"/>`;
+  }
+  return html;
+}
+
+function renderCanvas(){
+  itemsG.innerHTML = state.items.map(itemSVG).join('') + groupOutlines();
+  renderOverlay();
+}
+
+function bboxOf(it){
+  if(it.type === 'label'){
+    const g = itemsG.querySelector(`g[data-id="${it.id}"] text`);
+    if(g && typeof g.getBBox === 'function'){
+      try{
+        const b = g.getBBox();
+        return {x:b.x-4, y:b.y-2, w:b.width+8, h:b.height+4};
+      }catch(e){ /* 未描画時など */ }
+    }
+    const fs = it.fontSize || 18;
+    const len = String(it.name || 'ラベル').length;
+    return {x:it.x-4, y:it.y-2, w:len*fs+8, h:fs+8};
+  }
+  return {x:it.x, y:it.y, w:it.w, h:it.h};
+}
+
+function renderOverlay(){
+  overlayG.innerHTML = '';
+  const its = selectedItems();
+  if(!its.length) return;
+  let html = '';
+  for(const it of its){
+    const b = bboxOf(it);
+    html += `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="none"
+      stroke="#2E86AB" stroke-width="${1.6/zoom}" stroke-dasharray="${5/zoom},${4/zoom}"/>`;
+  }
+  if(its.length === 1 && its[0].type !== 'label'){
+    const b = bboxOf(its[0]);
+    const hs = 9/zoom;
+    const pts = [
+      ['nw',b.x,b.y],['n',b.x+b.w/2,b.y],['ne',b.x+b.w,b.y],
+      ['w',b.x,b.y+b.h/2],['e',b.x+b.w,b.y+b.h/2],
+      ['sw',b.x,b.y+b.h],['s',b.x+b.w/2,b.y+b.h],['se',b.x+b.w,b.y+b.h]
+    ];
+    const cur = {nw:'nwse-resize',se:'nwse-resize',ne:'nesw-resize',sw:'nesw-resize',
+                 n:'ns-resize',s:'ns-resize',e:'ew-resize',w:'ew-resize'};
+    for(const [h,px,py] of pts){
+      html += `<rect data-h="${h}" x="${px-hs/2}" y="${py-hs/2}" width="${hs}" height="${hs}"
+        fill="#fff" stroke="#2E86AB" stroke-width="${1.4/zoom}" style="cursor:${cur[h]};"/>`;
+    }
+  }
+  overlayG.innerHTML = html;
+}
+
+function flash(ids){
+  fxG.innerHTML = '';
+  for(const id of ids){
+    const it = state.items.find(i => i.id === id);
+    if(!it) continue;
+    const b = bboxOf(it);
+    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x', b.x-4); r.setAttribute('y', b.y-4);
+    r.setAttribute('width', b.w+8); r.setAttribute('height', b.h+8);
+    r.setAttribute('rx', 6);
+    r.setAttribute('fill','none');
+    r.setAttribute('stroke', it.color || '#2E86AB');
+    r.classList.add('pulse');
+    fxG.appendChild(r);
+    setTimeout(()=>r.remove(), 1600);
+  }
+}
+
+/* ---------- 鍵データ収集（リスト・印刷で共用） ---------- */
+function collectKeys(){
+  const withKey = state.items.filter(i => i.keyNo && FURN(i.type));
+  const noKey   = state.items.filter(i => !i.keyNo && FURN(i.type));
+  const groups = new Map();
+  for(const it of withKey){
+    if(!groups.has(it.keyNo)) groups.set(it.keyNo, []);
+    groups.get(it.keyNo).push(it);
+  }
+  const keys = [...groups.keys()]
+    .sort((a,b)=>a.localeCompare(b,'ja',{numeric:true}))
+    .map(k => {
+      const its = groups.get(k);
+      return {keyNo:k, color:its[0].color, items:its, names:its.map(i=>i.name).join('、')};
+    });
+  return {keys, noKey};
+}
+
+/* ---------- 鍵リスト ---------- */
+function renderKeyList(){
+  const el = $('#keyList');
+  const {keys, noKey} = collectKeys();
+
+  let html = '';
+  if(keys.length === 0){
+    html += `<div class="kempty">まだ鍵が登録されていません。家具を選択して右パネルで「鍵番号」を入力してください。</div>`;
+  }
+  for(const k of keys){
+    html += `<div class="krow" data-key="${esc(k.keyNo)}">
+      <span class="dot" style="background:${esc(k.color)}"></span>
+      <span class="kt"><div class="kno">${esc(k.keyNo)}</div><div class="knm" title="${esc(k.names)}">${esc(k.names)}</div></span>
+      ${k.items.length>1 ? `<span class="kcount">×${k.items.length}</span>` : ''}
+    </div>`;
+  }
+  if(noKey.length){
+    html += `<div class="ksec">鍵未設定（${noKey.length}件）</div>`;
+    for(const it of noKey){
+      html += `<div class="krow nokey" data-item="${it.id}">
+        <span class="dot"></span>
+        <span class="kt"><div class="knm" style="font-size:12px;color:var(--ink);">${esc(it.name)}</div></span>
+      </div>`;
+    }
+  }
+  el.innerHTML = html;
+
+  el.querySelectorAll('.krow[data-key]').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const k = row.dataset.key;
+      const its = state.items.filter(i => i.keyNo === k);
+      if(its.length){ selectOnly(its[0].id); flash(its.map(i=>i.id)); }
+    });
+  });
+  el.querySelectorAll('.krow[data-item]').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const id = +row.dataset.item;
+      selectOnly(id); flash([id]);
+    });
+  });
+}
+
+/* ---------- プロパティ ---------- */
+function renderProps(){
+  if(propEditing) return;
+  const el = $('#props');
+  const its = selectedItems();
+
+  /* --- 何も選択されていない --- */
+  if(its.length === 0){
+    el.innerHTML = `<div class="nosel">
+      マップ上の家具をクリックすると、名前・鍵番号・サイズを編集できます。<br><br>
+      <kbd style="background:#EEF1F5;border:1px solid #D4DAE2;border-radius:4px;padding:1px 5px;font-size:11px;">Shift</kbd>+クリックで複数選択できます。収納棚を複数選択すると「合体」できます。
+    </div>`;
+    return;
+  }
+
+  /* --- 複数選択 --- */
+  if(its.length > 1){
+    const sameGroup = its.every(i => i.groupId && i.groupId === its[0].groupId);
+    const cabs = its.filter(i => i.type === 'cabinet');
+    let html = '';
+    if(sameGroup){
+      html += `<span class="typechip grp">グループ（${TYPE_NAME[its[0].type]}×${its.length}）</span>
+        <div class="phint">グループはまとめて移動できます。個別に編集するには家具をダブルクリックしてください。</div>
+        <div class="pbtns">
+          <button class="pbtn" id="pUngroup">分解</button>
+          <button class="pbtn del" id="pDelM">削除</button>
+        </div>`;
+    }else{
+      html += `<span class="typechip">${its.length}個 選択中</span>`;
+      if(cabs.length >= 2){
+        html += `<div class="phint">収納棚 ${cabs.length}台を一列に整列して合体します（合体後はまとめて移動できます）。</div>
+          <div class="pbtns"><button class="pbtn main" id="pMerge">合体</button></div>`;
+      }else{
+        html += `<div class="phint">まとめて移動・削除ができます。「合体」は収納棚を2台以上選択したときに使えます。</div>`;
+      }
+      html += `<div class="pbtns"><button class="pbtn del" id="pDelM">削除</button></div>`;
+    }
+    el.innerHTML = html;
+    const mg = $('#pMerge'); if(mg) mg.addEventListener('click', mergeSelected);
+    const ug = $('#pUngroup'); if(ug) ug.addEventListener('click', ungroupSelected);
+    $('#pDelM').addEventListener('click', ()=>removeItems(selIds));
+    return;
+  }
+
+  /* --- 単一選択 --- */
+  const it = its[0];
+  const isFurn = FURN(it.type);
+  const isLabel = it.type === 'label';
+  let html = `<span class="typechip">${TYPE_NAME[it.type]}</span>`;
+  if(it.groupId) html += `<span class="typechip grp">グループ所属</span>`;
+  html += `<div class="field"><label>名前</label>
+      <input type="text" id="pName" value="${esc(it.name)}" placeholder="例：経理デスク"></div>`;
+  if(isFurn){
+    html += `<div class="field"><label>鍵番号（鍵タグに表示）</label>
+      <input type="text" id="pKey" value="${esc(it.keyNo)}" placeholder="例：A-1"></div>
+      <div class="field"><label>鍵の色</label>
+        <div class="swatches">${PALETTE.map(c =>
+          `<span class="sw ${c===it.color?'on':''}" data-c="${c}" style="background:${c}"></span>`).join('')}
+        </div></div>`;
+    if(it.keyNo){
+      const sc = it.tagScale || 1;
+      const custom = it.tagOx != null;
+      const pos = custom ? '' : (it.tagPos || 'tl');
+      html += `<div class="field"><label>タグの大きさ</label>
+        <div class="seg" id="pTagSize">${[['0.75','小'],['1','中'],['1.35','大']].map(([v,l]) =>
+          `<button data-s="${v}" class="${+v===sc?'on':''}">${l}</button>`).join('')}
+        </div></div>
+      <div class="field"><label>タグの位置</label>
+        <div class="seg" id="pTagPos">${[['tl','左上'],['tr','右上'],['bl','左下'],['br','右下']].map(([v,l]) =>
+          `<button data-p="${v}" class="${v===pos?'on':''}">${l}</button>`).join('')}
+        </div>
+        <div class="phint" style="margin-top:6px;">タグは図上でドラッグしても動かせます。${custom ? '' : ''}</div>
+        ${custom ? `<div class="pbtns" style="margin-top:6px;"><button class="pbtn" id="pTagReset">タグ位置をリセット</button></div>` : ''}
+      </div>`;
+    }
+  }
+  if(it.type === 'cabinet'){
+    const d = it.door === 'sliding' ? 'sliding' : 'hinged';
+    html += `<div class="field"><label>扉タイプ</label>
+      <div class="seg" id="pDoor">
+        <button data-door="hinged" class="${d==='hinged'?'on':''}">観音開き</button>
+        <button data-door="sliding" class="${d==='sliding'?'on':''}">横スライド</button>
+      </div></div>`;
+  }
+  if(it.type === 'subdesk'){
+    const n = Math.max(1, Math.min(4, it.drawers || 3));
+    html += `<div class="field"><label>引き出しの段数</label>
+      <div class="seg" id="pDrawers">${[1,2,3,4].map(v =>
+        `<button data-d="${v}" class="${v===n?'on':''}">${v}</button>`).join('')}
+      </div></div>`;
+  }
+  if(!isLabel){
+    html += `<div class="frow">
+      <div class="field"><label>X（cm）</label><input type="number" id="pX" step="10" value="${Math.round(it.x)}"></div>
+      <div class="field"><label>Y（cm）</label><input type="number" id="pY" step="10" value="${Math.round(it.y)}"></div>
+    </div>
+    <div class="frow">
+      <div class="field"><label>幅（cm）</label><input type="number" id="pW" step="10" min="10" value="${Math.round(it.w)}"></div>
+      <div class="field"><label>奥行（cm）</label><input type="number" id="pH" step="10" min="10" value="${Math.round(it.h)}"></div>
+    </div>`;
+  }else{
+    html += `<div class="field"><label>文字サイズ</label>
+      <input type="number" id="pFs" min="10" max="80" value="${it.fontSize||18}"></div>`;
+  }
+  html += `<div class="pbtns">`;
+  if(!isLabel) html += `<button class="pbtn" id="pSwap">縦横入替</button>`;
+  html += `<button class="pbtn" id="pDup">複製</button>
+    <button class="pbtn del" id="pDel">削除</button></div>`;
+  if(it.groupId){
+    html += `<div class="pbtns"><button class="pbtn" id="pUngroup1">グループを分解</button></div>`;
+  }
+  el.innerHTML = html;
+
+  const bind = (id, fn) => { const n = $(id); if(n){
+    n.addEventListener('input', e=>{ propEditing = true; fn(e.target.value); update(false); propEditing = false; });
+  }};
+  bind('#pName', v => it.name = v);
+  bind('#pKey',  v => it.keyNo = v.trim());
+  bind('#pX', v => it.x = +v || 0);
+  bind('#pY', v => it.y = +v || 0);
+  bind('#pW', v => it.w = Math.max(10, +v || 10));
+  bind('#pH', v => it.h = Math.max(10, +v || 10));
+  bind('#pFs', v => it.fontSize = Math.max(10, Math.min(80, +v || 18)));
+
+  el.querySelectorAll('.sw').forEach(s => s.addEventListener('click', ()=>{
+    it.color = s.dataset.c; update(true);
+  }));
+  const pKeyEl = $('#pKey');
+  if(pKeyEl) pKeyEl.addEventListener('change', ()=>{ renderProps(); });  // 鍵番号の確定時にタグ設定欄を出し入れ
+
+  const tsz = $('#pTagSize');
+  if(tsz) tsz.querySelectorAll('button').forEach(b => b.addEventListener('click', ()=>{
+    it.tagScale = +b.dataset.s; update(true);
+  }));
+  const tps = $('#pTagPos');
+  if(tps) tps.querySelectorAll('button').forEach(b => b.addEventListener('click', ()=>{
+    it.tagPos = b.dataset.p;
+    delete it.tagOx; delete it.tagOy;   // プリセット選択で自由配置を解除
+    update(true);
+  }));
+  const trs = $('#pTagReset');
+  if(trs) trs.addEventListener('click', ()=>{
+    delete it.tagOx; delete it.tagOy;
+    update(true);
+  });
+
+  const dseg = $('#pDoor');
+  if(dseg) dseg.querySelectorAll('button').forEach(b => b.addEventListener('click', ()=>{
+    it.door = b.dataset.door; update(true);
+  }));
+  const dr = $('#pDrawers');
+  if(dr) dr.querySelectorAll('button').forEach(b => b.addEventListener('click', ()=>{
+    it.drawers = +b.dataset.d; update(true);
+  }));
+  const swap = $('#pSwap');
+  if(swap) swap.addEventListener('click', ()=>{ [it.w, it.h] = [it.h, it.w]; update(true); });
+  $('#pDup').addEventListener('click', duplicateSelected);
+  $('#pDel').addEventListener('click', ()=>{ removeItems([it.id]); });
+  const ug1 = $('#pUngroup1');
+  if(ug1) ug1.addEventListener('click', ()=>{
+    const gid = it.groupId;
+    state.items.forEach(i => { if(i.groupId === gid) delete i.groupId; });
+    update(true);
+  });
+}
+
+/* ---------- 合体・分解 ---------- */
+function mergeSelected(){
+  const its = selectedItems().filter(i => i.type === 'cabinet');
+  if(its.length < 2) return;
+  state.groupSeq = (state.groupSeq || 0) + 1;
+  const gid = state.groupSeq;
+  const minX = Math.min(...its.map(i=>i.x)), minY = Math.min(...its.map(i=>i.y));
+  const spanX = Math.max(...its.map(i=>i.x+i.w)) - minX;
+  const spanY = Math.max(...its.map(i=>i.y+i.h)) - minY;
+  if(spanX >= spanY){
+    its.sort((a,b)=> a.x - b.x || a.y - b.y);
+    let cx = minX;
+    for(const i of its){ i.x = cx; i.y = minY; i.groupId = gid; cx += i.w; }
+  }else{
+    its.sort((a,b)=> a.y - b.y || a.x - b.x);
+    let cy = minY;
+    for(const i of its){ i.y = cy; i.x = minX; i.groupId = gid; cy += i.h; }
+  }
+  selIds = its.map(i=>i.id);
+  update(true);
+}
+function ungroupSelected(){
+  for(const i of selectedItems()) delete i.groupId;
+  update(true);
+}
+
+/* ---------- 選択 ---------- */
+function select(id, additive = false){
+  const it = state.items.find(i => i.id === id);
+  if(!it) return;
+  const ids = it.groupId
+    ? state.items.filter(i => i.groupId === it.groupId).map(i => i.id)
+    : [id];
+  if(additive){
+    const allIn = ids.every(x => selIds.includes(x));
+    if(allIn) selIds = selIds.filter(x => !ids.includes(x));
+    else selIds = [...new Set([...selIds, ...ids])];
+  }else{
+    selIds = ids;
+  }
+  renderOverlay(); renderProps();
+}
+function selectOnly(id){
+  selIds = [id];
+  renderOverlay(); renderProps();
+}
+function clearSelection(){
+  selIds = [];
+  renderOverlay(); renderProps();
+}
+
+function removeItems(ids){
+  state.items = state.items.filter(i => !ids.includes(i.id));
+  selIds = selIds.filter(id => !ids.includes(id));
+  update(true);
+}
+
+function duplicateSelected(){
+  const its = selectedItems();
+  if(!its.length) return;
+  const gidMap = new Map();
+  const newIds = [];
+  for(const it of its){
+    const cp = JSON.parse(JSON.stringify(it));
+    cp.id = state.seq++; cp.x += 20; cp.y += 20; cp.keyNo = '';
+    cp.color = PALETTE[(colorIdx++) % PALETTE.length];
+    if(cp.groupId){
+      if(!gidMap.has(cp.groupId)){
+        state.groupSeq = (state.groupSeq || 0) + 1;
+        gidMap.set(cp.groupId, state.groupSeq);
+      }
+      cp.groupId = gidMap.get(cp.groupId);
+    }
+    state.items.push(cp);
+    newIds.push(cp.id);
+  }
+  selIds = newIds;
+  update(true);
+}
+
+function cleanupGroups(){
+  const counts = {};
+  for(const i of state.items) if(i.groupId) counts[i.groupId] = (counts[i.groupId]||0)+1;
+  for(const i of state.items) if(i.groupId && counts[i.groupId] < 2) delete i.groupId;
+}
+
+function update(rebuildProps){
+  cleanupGroups();
+  renderCanvas();
+  renderKeyList();
+  if(rebuildProps) renderProps();
+  persist();
+}
+
+/* ---------- 追加 ---------- */
+function addItem(type){
+  const r = cv.getBoundingClientRect();
+  const c = screenToWorld(r.left + r.width/2, r.top + r.height/2);
+  const defs = {
+    desk:    {w:140, h:70,  name:'デスク'},
+    subdesk: {w:45,  h:70,  name:'サブデスク'},
+    cabinet: {w:90,  h:45,  name:'収納棚'},
+    wall:    {w:240, h:8,   name:''},
+    label:   {w:0,   h:0,   name:'エリア名'},
+  };
+  const d = defs[type];
+  const count = state.items.filter(i=>i.type===type).length + 1;
+  const it = {
+    id: state.seq++, type,
+    x: Math.round((c.x - d.w/2)/10)*10,
+    y: Math.round((c.y - d.h/2)/10)*10,
+    w: d.w, h: d.h,
+    name: d.name ? `${d.name} ${count}` : '',
+    keyNo: '',
+    color: PALETTE[(colorIdx++) % PALETTE.length],
+  };
+  if(type === 'label') it.fontSize = 18;
+  if(type === 'subdesk') it.drawers = 3;
+  state.items.push(it);
+  selIds = [it.id];
+  update(true);
+}
+document.querySelectorAll('[data-add]').forEach(b =>
+  b.addEventListener('click', ()=> addItem(b.dataset.add)));
+
+/* ---------- ポインタ操作 ---------- */
+let mode = null, dragStart = null, itemStart = null, dragHandle = null, moved = false, downItemId = null;
+
+cv.addEventListener('pointerdown', e => {
+  if(e.button !== 0) return;
+  cv.setPointerCapture(e.pointerId);
+  moved = false;
+  downItemId = null;
+  const roomH  = e.target.closest('[data-room]');
+  const handle = e.target.closest('[data-h]');
+  const tagG   = e.target.closest('[data-tag]');
+  const itemG  = e.target.closest('[data-id]');
+  const w = screenToWorld(e.clientX, e.clientY);
+  dragStart = {x:w.x, y:w.y, sx:e.clientX, sy:e.clientY, panX, panY};
+
+  if(roomH){
+    mode = 'roomResize'; dragHandle = roomH.dataset.room;
+    itemStart = {w:state.room.w, h:state.room.h};
+  }else if(handle && selIds.length === 1){
+    mode = 'resize'; dragHandle = handle.dataset.h;
+    const it = selectedItems()[0];
+    itemStart = {x:it.x, y:it.y, w:it.w, h:it.h};
+  }else if(tagG){
+    const id = +tagG.dataset.tag;
+    const it = state.items.find(i => i.id === id);
+    if(it){
+      selectOnly(id);
+      mode = 'tagMove';
+      const a = tagAnchor(it);
+      itemStart = {ox:a.ox, oy:a.oy, wasCustom: it.tagOx != null};
+    }
+  }else if(itemG){
+    const id = +itemG.dataset.id;
+    downItemId = id;
+    if(e.shiftKey){
+      const wasSelected = selIds.includes(id);
+      select(id, true);
+      if(wasSelected){ mode = null; return; }
+    }else if(!selIds.includes(id)){
+      select(id);
+    }
+    mode = 'move';
+    itemStart = {};
+    for(const sid of selIds){
+      const i = state.items.find(t => t.id === sid);
+      if(i) itemStart[sid] = {x:i.x, y:i.y};
+    }
+  }else{
+    mode = 'pan';
+  }
+});
+
+cv.addEventListener('pointermove', e => {
+  if(!mode) return;
+  if(Math.abs(e.clientX-dragStart.sx) + Math.abs(e.clientY-dragStart.sy) > 3) moved = true;
+  const snap = e.shiftKey ? 1 : 10;
+  const rnd = v => Math.round(v/snap)*snap;
+
+  if(mode === 'pan'){
+    viewTouched = true;
+    panX = dragStart.panX + (e.clientX - dragStart.sx);
+    panY = dragStart.panY + (e.clientY - dragStart.sy);
+    applyView();
+    return;
+  }
+  const p = screenToWorld(e.clientX, e.clientY);
+  const dx = p.x - dragStart.x, dy = p.y - dragStart.y;
+
+  if(mode === 'roomResize'){
+    if(dragHandle.includes('e'))
+      state.room.w = Math.max(200, Math.min(10000, rnd(itemStart.w + dx)));
+    if(dragHandle.includes('s'))
+      state.room.h = Math.max(200, Math.min(10000, rnd(itemStart.h + dy)));
+    $('#roomW').value = state.room.w;
+    $('#roomH').value = state.room.h;
+    renderRoom();
+    return;
+  }
+  if(mode === 'tagMove'){
+    const it = selectedItems()[0];
+    if(!it) return;
+    const ts = e.shiftKey ? 1 : 5;
+    const rndT = v => Math.round(v/ts)*ts;
+    it.tagOx = rndT(itemStart.ox + dx);
+    it.tagOy = rndT(itemStart.oy + dy);
+    renderCanvas();
+    return;
+  }
+  if(mode === 'move'){
+    for(const sid of selIds){
+      const i = state.items.find(t => t.id === sid);
+      const s = itemStart[sid];
+      if(i && s){ i.x = rnd(s.x + dx); i.y = rnd(s.y + dy); }
+    }
+    renderCanvas();
+    return;
+  }
+  if(mode === 'resize'){
+    const it = selectedItems()[0];
+    if(!it) return;
+    const h = dragHandle, s = itemStart, MIN = 10;
+    let nx=s.x, ny=s.y, nw=s.w, nh=s.h;
+    if(h.includes('e')) nw = s.w + dx;
+    if(h.includes('s')) nh = s.h + dy;
+    if(h.includes('w')){ nx = s.x + dx; nw = s.w - dx; }
+    if(h.includes('n')){ ny = s.y + dy; nh = s.h - dy; }
+    nw = rnd(nw); nh = rnd(nh); nx = rnd(nx); ny = rnd(ny);
+    if(nw >= MIN){ it.x = nx; it.w = nw; }
+    if(nh >= MIN){ it.y = ny; it.h = nh; }
+    renderCanvas();
+  }
+});
+
+cv.addEventListener('pointerup', e => {
+  if(mode === 'pan' && !moved){
+    clearSelection();
+  }else if(mode === 'roomResize'){
+    persist();
+  }else if(mode === 'tagMove'){
+    if(!moved){
+      const it = selectedItems()[0];
+      if(it){
+        if(itemStart.wasCustom){ it.tagOx = itemStart.ox; it.tagOy = itemStart.oy; }
+        else { delete it.tagOx; delete it.tagOy; }
+      }
+    }
+    update(false);
+    propEditing = false; renderProps();
+  }else if(mode === 'move' || mode === 'resize'){
+    if(mode === 'move' && !moved && downItemId != null && !e.shiftKey){
+      select(downItemId);   // クリックのみ → そのアイテム（グループ）だけに選択を絞る
+    }
+    update(false);
+    propEditing = false; renderProps();
+  }
+  mode = null; dragHandle = null; downItemId = null;
+});
+
+cv.addEventListener('dblclick', e => {
+  const g = e.target.closest('[data-id]');
+  if(g) selectOnly(+g.dataset.id);
+});
+
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  zoomAt(Math.exp(-e.deltaY * 0.0012), e.clientX, e.clientY);
+}, {passive:false});
+
+/* ---------- キーボード ---------- */
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement && document.activeElement.tagName;
+  if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+  if(e.key === 'Escape'){ clearSelection(); return; }
+  if(!selIds.length) return;
+
+  if(e.key === 'Delete' || e.key === 'Backspace'){
+    e.preventDefault(); removeItems([...selIds]); return;
+  }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase() === 'd'){
+    e.preventDefault(); duplicateSelected(); return;
+  }
+  const step = e.shiftKey ? 1 : 10;
+  let dx=0, dy=0;
+  if(e.key==='ArrowLeft') dx=-step; else if(e.key==='ArrowRight') dx=step;
+  else if(e.key==='ArrowUp') dy=-step; else if(e.key==='ArrowDown') dy=step;
+  if(dx||dy){
+    e.preventDefault();
+    for(const it of selectedItems()){ it.x += dx; it.y += dy; }
+    update(false);
+  }
+});
+
+/* ---------- 部屋サイズ・グリッド ---------- */
+$('#roomW').addEventListener('change', e=>{
+  state.room.w = Math.max(200, Math.min(10000, +e.target.value || 800));
+  e.target.value = state.room.w;
+  renderRoom(); persist();
+  if(!viewTouched) zoomFit();
+});
+$('#roomH').addEventListener('change', e=>{
+  state.room.h = Math.max(200, Math.min(10000, +e.target.value || 500));
+  e.target.value = state.room.h;
+  renderRoom(); persist();
+  if(!viewTouched) zoomFit();
+});
+$('#gridChk').addEventListener('change', e=>{
+  state.showGrid = e.target.checked;
+  renderRoom(); persist();
+});
+$('#nameChk').addEventListener('change', e=>{
+  state.showNames = e.target.checked;
+  renderCanvas(); persist();
+});
+
+/* ---------- ズームUI ---------- */
+$('#zoomIn').addEventListener('click', ()=>zoomAt(1.2));
+$('#zoomOut').addEventListener('click', ()=>zoomAt(1/1.2));
+$('#zoomFit').addEventListener('click', zoomFit);
+
+/* ---------- 書き出し用SVG（PNG・印刷で共用） ---------- */
+function buildExportSVG(){
+  const m = 50;
+  const w = state.room.w + m*2, h = state.room.h + m*2;
+  const svg =
+`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-m} ${-m} ${w} ${h}" width="${w}" height="${h}"
+  font-family="'Hiragino Kaku Gothic ProN','Noto Sans JP',Meiryo,sans-serif">
+  <rect x="${-m}" y="${-m}" width="${w}" height="${h}" fill="#F4F2EC"/>
+  <defs>${$('#cv defs').innerHTML}</defs>
+  ${roomG.innerHTML}
+  ${itemsG.innerHTML}
+</svg>`;
+  return {svg, w, h};
+}
+
+/* ---------- 保存・読み込み ---------- */
+function download(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+$('#btnSave').addEventListener('click', ()=>{
+  download(new Blob([JSON.stringify(state, null, 2)], {type:'application/json'}),
+           '鍵対応マップ.json');
+});
+$('#btnLoad').addEventListener('click', ()=>$('#fileIn').click());
+$('#fileIn').addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    try{
+      const d = JSON.parse(fr.result);
+      if(!d || !d.room || !Array.isArray(d.items)) throw 0;
+      state = d;
+      if(!state.seq) state.seq = Math.max(0, ...state.items.map(i=>i.id))+1;
+      if(state.showGrid === undefined) state.showGrid = true;
+      if(state.showNames === undefined) state.showNames = true;
+      if(!state.groupSeq) state.groupSeq = 0;
+      selIds = [];
+      $('#roomW').value = state.room.w;
+      $('#roomH').value = state.room.h;
+      $('#gridChk').checked = state.showGrid;
+      $('#nameChk').checked = state.showNames;
+      renderRoom(); update(true); zoomFit();
+    }catch(err){
+      alert('読み込めませんでした。鍵対応マップで保存したJSONファイルを選択してください。');
+    }
+    e.target.value = '';
+  };
+  fr.readAsText(f);
+});
+
+/* ---------- PNG書き出し ---------- */
+$('#btnPng').addEventListener('click', ()=>{
+  const {svg, w, h} = buildExportSVG();
+  const img = new Image();
+  img.onload = ()=>{
+    const scale = Math.min(2, 2400/Math.max(w,h));
+    const c = document.createElement('canvas');
+    c.width = Math.round(w*scale); c.height = Math.round(h*scale);
+    const ctx = c.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0, w, h);
+    c.toBlob(b => download(b, '鍵対応マップ.png'), 'image/png');
+  };
+  img.onerror = ()=>alert('PNGの書き出しに失敗しました。');
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+});
+
+/* ---------- A4印刷 ---------- */
+$('#btnA4').addEventListener('click', ()=>{
+  clearSelection();
+  const {svg} = buildExportSVG();
+  const landscape = state.room.w >= state.room.h;
+  $('#pageStyle').textContent =
+    `@page{size:A4 ${landscape ? 'landscape' : 'portrait'}; margin:10mm;}`;
+
+  const {keys, noKey} = collectKeys();
+  let rows = keys.map(k =>
+    `<div class="prow">
+      <span class="pdot" style="background:${esc(k.color)}"></span>
+      <span class="pkno">${esc(k.keyNo)}</span>
+      <span class="pnames">${esc(k.names)}${k.items.length>1 ? `（×${k.items.length}）` : ''}</span>
+    </div>`).join('');
+  if(!rows) rows = '<div class="prow"><span class="pnames">鍵が登録されていません</span></div>';
+
+  $('#printSheet').innerHTML = `
+    <div class="phead">
+      <span class="pttl">鍵対応マップ</span>
+      <span class="pdate">${new Date().toLocaleDateString('ja-JP')}</span>
+    </div>
+    <div class="pmap" style="height:${landscape ? '115mm' : '165mm'};">${svg}</div>
+    <div class="plist ${landscape ? 'c3' : 'c2'}">${rows}</div>
+    ${noKey.length ? `<div class="pnote">鍵未設定：${esc(noKey.map(i=>i.name).join('、'))}</div>` : ''}`;
+
+  window.print();
+});
+
+/* ---------- ヘルプ ---------- */
+$('#btnHelp').addEventListener('click', ()=>$('#helpDlg').showModal());
+$('#helpClose').addEventListener('click', ()=>$('#helpDlg').close());
+$('#helpDlg').addEventListener('click', e=>{ if(e.target.id==='helpDlg') e.target.close(); });
+
+/* ---------- 起動 ---------- */
+state = loadState();
+$('#roomW').value = state.room.w;
+$('#roomH').value = state.room.h;
+$('#gridChk').checked = state.showGrid;
+$('#nameChk').checked = state.showNames !== false;
+renderRoom();
+update(true);
+
+/* 初期表示：レイアウト確定を待ってから全体フィット（確定前だと極小表示になるため） */
+function initialFit(attempt = 0){
+  if(zoomFit()) return;
+  if(attempt < 120) requestAnimationFrame(()=>initialFit(attempt + 1));
+}
+initialFit();
+window.addEventListener('load', ()=>{ if(!viewTouched) zoomFit(); });
+
+/* 画面サイズ変更時：手動操作前なら全体フィットを維持、操作後は表示位置を保つ */
+if(typeof ResizeObserver !== 'undefined'){
+  new ResizeObserver(()=>{
+    if(!viewTouched) zoomFit();
+    else applyView();
+  }).observe($('#canvasWrap'));
+}else{
+  window.addEventListener('resize', ()=>{
+    if(!viewTouched) zoomFit();
+    else applyView();
+  });
+}
+</script>
+</body>
+</html>
